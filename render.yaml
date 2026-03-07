@@ -8,6 +8,6 @@ services:
     startCommand: node server.js
     envVars:
       - key: PORT
-        fromPort: 5000
+        value: 5000
       - key: MONGODB_URI
         sync: false # User provides this in Render Dashboard or uses Mock Fallback
