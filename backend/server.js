@@ -20,10 +20,11 @@ const mockDb = [
         productName: "apple iphone 16 pro max, 256gb, desert titanium",
         store: "amazon",
         url: "http://localhost:5000/preview",
+        imageUrl: "https://images.unsplash.com/photo-1727192629344-97217596a5ca?q=80&w=600&auto=format&fit=crop",
         priceHistory: [
-            { price: 1299.00, date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
-            { price: 1250.00, date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000) },
-            { price: 1220.00, date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) }
+            { price: 129000.00, date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+            { price: 125000.00, date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000) },
+            { price: 119999.00, date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) }
         ]
     }
 ];
@@ -45,6 +46,11 @@ app.get(['/', '/dashboard'], (req, res) => {
 // Serve Preview Demo
 app.get('/preview', (req, res) => {
     res.sendFile(path.join(__dirname, '../preview_demo.html'));
+});
+
+// Serve Deep Analysis Page
+app.get('/analysis', (req, res) => {
+    res.sendFile(path.join(__dirname, 'analysis.html'));
 });
 
 // --- API Routes ---
@@ -69,6 +75,7 @@ app.get('/api/analysis/all', async (req, res) => {
                 store: product.store || 'universal',
                 currentPrice: latestPrice,
                 historicalAverage: averagePrice.toFixed(2),
+                imageUrl: product.imageUrl || 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=300',
                 suggestion
             };
         });
@@ -100,13 +107,18 @@ app.post('/api/prices/analyze-url', async (req, res) => {
 
         const storeName = getStoreFromUrl(url);
         const products_pool = [
-            "Premium Wireless Headphones", "E-Reader Paperwhite Edition",
-            "Flagship Smartphone Ultra", "Ergonomic Productivity Mouse",
-            "Mechanical Gaming Keyboard", "4K Ultra HDR Monitor"
+            { name: "Premium Wireless Headphones", img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=600&auto=format&fit=crop" },
+            { name: "E-Reader Paperwhite Edition", img: "https://images.unsplash.com/photo-1592434134753-a70baf7979d7?q=80&w=600&auto=format&fit=crop" },
+            { name: "Flagship Smartphone Ultra", img: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?q=80&w=600&auto=format&fit=crop" },
+            { name: "Ergonomic Productivity Mouse", img: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?q=80&w=600&auto=format&fit=crop" },
+            { name: "Mechanical Gaming Keyboard", img: "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?q=80&w=600&auto=format&fit=crop" },
+            { name: "4K Ultra HDR Monitor", img: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=600&auto=format&fit=crop" }
         ];
 
-        const randomTitle = products_pool[Math.floor(Math.random() * products_pool.length)];
-        const randomPrice = (Math.random() * (500 - 50) + 50).toFixed(2);
+        const randomAsset = products_pool[Math.floor(Math.random() * products_pool.length)];
+        const randomTitle = randomAsset.name;
+        const randomImage = randomAsset.img;
+        const randomPrice = (Math.random() * (50000 - 5000) + 5000).toFixed(2);
         const histPrice = (parseFloat(randomPrice) * (1.1 + Math.random() * 0.3)).toFixed(2);
 
         const normalizedName = randomTitle.toLowerCase().trim();
@@ -122,6 +134,7 @@ app.post('/api/prices/analyze-url', async (req, res) => {
                     productName: normalizedName,
                     store: storeName.toLowerCase(),
                     url: url,
+                    imageUrl: randomImage,
                     priceHistory: priceHistory
                 };
                 mockDb.push(product);
@@ -136,6 +149,7 @@ app.post('/api/prices/analyze-url', async (req, res) => {
                 productName: normalizedName,
                 store: storeName.toLowerCase(),
                 url: url,
+                imageUrl: randomImage,
                 priceHistory: priceHistory
             });
             await product.save();
