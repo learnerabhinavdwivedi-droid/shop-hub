@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: shop-hub-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: PORT
+        fromPort: 5000
+      - key: MONGODB_URI
+        sync: false # User provides this in Render Dashboard or uses Mock Fallback
