@@ -8,32 +8,58 @@ const cheerio = require('cheerio');
 const https = require('https');
 const http = require('http');
 
-// Helper: Fetch OG image from a URL
-async function fetchOgImage(url) {
+// Helper: Fetch OG metadata (title + image) from a URL
+async function fetchPageMeta(url) {
     return new Promise((resolve) => {
-        const timeout = setTimeout(() => resolve(null), 5000);
+        const timeout = setTimeout(() => resolve({ title: null, image: null }), 6000);
         try {
             const mod = url.startsWith('https') ? https : http;
-            mod.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (res) => {
+            mod.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' } }, (res) => {
                 if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
                     clearTimeout(timeout);
-                    return fetchOgImage(res.headers.location).then(resolve);
+                    return fetchPageMeta(res.headers.location).then(resolve);
                 }
                 let html = '';
-                res.on('data', chunk => { html += chunk; if (html.length > 200000) res.destroy(); });
+                res.on('data', chunk => { html += chunk; if (html.length > 300000) res.destroy(); });
                 res.on('end', () => {
                     clearTimeout(timeout);
                     try {
                         const $ = cheerio.load(html);
-                        const ogImg = $('meta[property="og:image"]').attr('content')
-                            || $('meta[name="twitter:image"]').attr('content');
-                        resolve(ogImg || null);
-                    } catch (e) { resolve(null); }
+                        const title = $('meta[property="og:title"]').attr('content')
+                            || $('meta[name="twitter:title"]').attr('content')
+                            || $('title').text()
+                            || null;
+                        const image = $('meta[property="og:image"]').attr('content')
+                            || $('meta[name="twitter:image"]').attr('content')
+                            || null;
+                        resolve({ title: title ? title.trim() : null, image });
+                    } catch (e) { resolve({ title: null, image: null }); }
                 });
-                res.on('error', () => { clearTimeout(timeout); resolve(null); });
-            }).on('error', () => { clearTimeout(timeout); resolve(null); });
-        } catch (e) { clearTimeout(timeout); resolve(null); }
+                res.on('error', () => { clearTimeout(timeout); resolve({ title: null, image: null }); });
+            }).on('error', () => { clearTimeout(timeout); resolve({ title: null, image: null }); });
+        } catch (e) { clearTimeout(timeout); resolve({ title: null, image: null }); }
     });
+}
+
+// Helper: Extract product name from URL path (fallback when OG tags blocked)
+function extractTitleFromUrl(url) {
+    try {
+        const pathname = new URL(url).pathname;
+        // Find the longest slug segment (likely the product name)
+        const segments = pathname.split('/').filter(s => s.length > 5);
+        if (segments.length === 0) return null;
+        // Pick the segment that looks most like a product name (has hyphens)
+        const best = segments.reduce((a, b) => {
+            const aScore = (a.match(/-/g) || []).length;
+            const bScore = (b.match(/-/g) || []).length;
+            return bScore > aScore ? b : a;
+        });
+        // Clean: replace hyphens with spaces, remove IDs and query params
+        let cleaned = best.replace(/[-_]/g, ' ').replace(/\b[a-f0-9]{10,}\b/gi, '').trim();
+        if (cleaned.length < 5) return null;
+        // Capitalize words
+        return cleaned.split(' ').filter(w => w.length > 0).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    } catch (e) { return null; }
 }
 
 const app = express();
@@ -138,25 +164,19 @@ app.post('/api/prices/analyze-url', async (req, res) => {
         if (!url) return res.status(400).json({ error: 'URL is required' });
 
         const storeName = getStoreFromUrl(url);
-        const products_pool = [
-            { name: "Premium Wireless Headphones", img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=600&auto=format&fit=crop" },
-            { name: "E-Reader Paperwhite Edition", img: "https://images.unsplash.com/photo-1592434134753-a70baf7979d7?q=80&w=600&auto=format&fit=crop" },
-            { name: "Flagship Smartphone Ultra", img: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?q=80&w=600&auto=format&fit=crop" },
-            { name: "Ergonomic Productivity Mouse", img: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?q=80&w=600&auto=format&fit=crop" },
-            { name: "Mechanical Gaming Keyboard", img: "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?q=80&w=600&auto=format&fit=crop" },
-            { name: "4K Ultra HDR Monitor", img: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=600&auto=format&fit=crop" }
-        ];
 
-        const randomAsset = products_pool[Math.floor(Math.random() * products_pool.length)];
-        const randomTitle = randomAsset.name;
+        // Extract real product data from the URL
+        const pageMeta = await fetchPageMeta(url);
+
+        // Smart title: OG title > URL path extraction > generic fallback
+        const urlTitle = extractTitleFromUrl(url);
+        const productTitle = pageMeta.title || urlTitle || `Product from ${storeName}`;
+        const productImage = pageMeta.image || `https://source.unsplash.com/400x400/?${encodeURIComponent(productTitle.split(' ').slice(0, 2).join(' '))},product`;
+
         const randomPrice = (Math.random() * (50000 - 5000) + 5000).toFixed(2);
         const histPrice = (parseFloat(randomPrice) * (1.1 + Math.random() * 0.3)).toFixed(2);
 
-        // Try to extract real product image from the URL
-        let extractedImage = await fetchOgImage(url);
-        const randomImage = extractedImage || randomAsset.img;
-
-        const normalizedName = randomTitle.toLowerCase().trim();
+        const normalizedName = productTitle.toLowerCase().trim();
         const priceHistory = [
             { price: parseFloat(histPrice), date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
             { price: parseFloat(randomPrice), date: new Date() }
@@ -169,7 +189,7 @@ app.post('/api/prices/analyze-url', async (req, res) => {
                     productName: normalizedName,
                     store: storeName.toLowerCase(),
                     url: url,
-                    imageUrl: randomImage,
+                    imageUrl: productImage,
                     priceHistory: priceHistory
                 };
                 mockDb.push(product);
@@ -184,7 +204,7 @@ app.post('/api/prices/analyze-url', async (req, res) => {
                 productName: normalizedName,
                 store: storeName.toLowerCase(),
                 url: url,
-                imageUrl: randomImage,
+                imageUrl: productImage,
                 priceHistory: priceHistory
             });
             await product.save();
@@ -255,6 +275,23 @@ app.get('/api/analysis/:productName', async (req, res) => {
             imageUrl: product.imageUrl || 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=300',
             priceHistory: product.priceHistory
         });
+    } catch (err) {
+        res.status(500).json({ error: 'Server Error' });
+    }
+});
+
+/**
+ * @route   DELETE /api/products/clear
+ * @desc    Clear all tracked products (for cleaning old data)
+ */
+app.delete('/api/products/clear', async (req, res) => {
+    try {
+        if (isUsingMock) {
+            mockDb.length = 0;
+            return res.json({ message: 'Mock database cleared' });
+        }
+        await Product.deleteMany({});
+        res.json({ message: 'All products cleared from database' });
     } catch (err) {
         res.status(500).json({ error: 'Server Error' });
     }
