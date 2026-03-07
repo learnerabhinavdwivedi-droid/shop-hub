@@ -219,6 +219,71 @@
             border-color: var(--primary);
         }
 
+        .buy-btn {
+            display: block;
+            width: 100%;
+            text-align: center;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            color: white;
+            text-decoration: none;
+            padding: 12px;
+            border-radius: 12px;
+            margin-top: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .buy-btn:hover {
+            filter: brightness(1.2);
+            transform: scale(1.02);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .card-actions a {
+            flex: 1;
+        }
+
+        .notification-toast {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 16px;
+            font-weight: 600;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            z-index: 9999;
+            animation: slideIn 0.5s ease, fadeOut 0.5s ease 4.5s forwards;
+            max-width: 350px;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
         #loading-overlay {
             position: fixed;
             inset: 0;
@@ -283,14 +348,49 @@
 
     <script>
         const API_BASE = '/api';
+        let previousSuggestions = JSON.parse(localStorage.getItem('shophub_suggestions') || '{}');
+
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
 
         async function loadTracks() {
             try {
                 const response = await fetch(`${API_BASE}/analysis/all`);
                 const products = await response.json();
+                checkForBuyNotifications(products);
                 renderCards(products);
             } catch (err) {
                 console.error("Failed to load tracks");
+            }
+        }
+
+        function checkForBuyNotifications(products) {
+            products.forEach(p => {
+                const prevSuggestion = previousSuggestions[p.productName];
+                if (prevSuggestion === 'Wait' && p.suggestion === 'Buy') {
+                    showNotification(p);
+                }
+                previousSuggestions[p.productName] = p.suggestion;
+            });
+            localStorage.setItem('shophub_suggestions', JSON.stringify(previousSuggestions));
+        }
+
+        function showNotification(product) {
+            // In-page toast
+            const toast = document.createElement('div');
+            toast.className = 'notification-toast';
+            toast.innerHTML = `🔔 <strong>${product.productName}</strong> is now a <strong>BUY</strong>! Price dropped to ₹${product.currentPrice}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+
+            // Browser notification
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('Shop Hub — Price Alert! 🎉', {
+                    body: `${product.productName} is now a BUY! Current: ₹${product.currentPrice}`,
+                    icon: product.imageUrl
+                });
             }
         }
 
@@ -314,7 +414,10 @@
                             <span class="stat-val">₹${p.historicalAverage}</span>
                         </div>
                     </div>
-                    <a href="/analysis?product=${encodeURIComponent(p.productName)}" class="analysis-link">📊 View Deep Analysis</a>
+                    <div class="card-actions">
+                        <a href="/analysis?product=${encodeURIComponent(p.productName)}" class="analysis-link">📊 Deep Analysis</a>
+                        <a href="${p.url}" target="_blank" rel="noopener" class="analysis-link buy-btn">🛒 Buy Now</a>
+                    </div>
                 </div>
             `).join('');
         }
@@ -349,6 +452,9 @@
 
         // Initialize with default data
         window.addEventListener('DOMContentLoaded', loadTracks);
+
+        // Auto-refresh every 60 seconds to detect price changes
+        setInterval(loadTracks, 60000);
     </script>
 </body>
 

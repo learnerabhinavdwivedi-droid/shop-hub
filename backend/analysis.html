@@ -112,6 +112,25 @@
         .stat-value {
             font-weight: 600;
         }
+
+        .buy-btn-big {
+            display: block;
+            width: 100%;
+            text-align: center;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            text-decoration: none;
+            padding: 14px;
+            border-radius: 16px;
+            margin-top: 20px;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .buy-btn-big:hover {
+            filter: brightness(1.2);
+            transform: scale(1.02);
+        }
     </style>
 </head>
 
@@ -165,23 +184,29 @@
                     <span class="stat-value">₹${data.historicalAverage}</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-label">Confidence Score</span>
-                    <span class="stat-value">94%</span>
+                    <span class="stat-label">Price Points</span>
+                    <span class="stat-value">${(data.priceHistory || []).length} records</span>
                 </div>
+                <a href="${data.url || '#'}" target="_blank" rel="noopener" class="buy-btn-big">🛒 Buy Now</a>
             `;
         }
 
         function renderChart(data) {
             const ctx = document.getElementById('priceChart').getContext('2d');
 
-            // Generate some mock history points based on avg and current
-            const labels = ['30 Days Ago', '20 Days Ago', '10 Days Ago', 'Current'];
-            const prices = [
-                data.historicalAverage * 1.05,
-                data.historicalAverage * 0.98,
-                data.historicalAverage * 1.1,
-                data.currentPrice
-            ];
+            let labels, prices;
+            if (data.priceHistory && data.priceHistory.length > 0) {
+                labels = data.priceHistory.map(p => new Date(p.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }));
+                prices = data.priceHistory.map(p => p.price);
+            } else {
+                labels = ['30 Days Ago', '20 Days Ago', '10 Days Ago', 'Current'];
+                prices = [
+                    data.historicalAverage * 1.05,
+                    data.historicalAverage * 0.98,
+                    data.historicalAverage * 1.1,
+                    data.currentPrice
+                ];
+            }
 
             new Chart(ctx, {
                 type: 'line',

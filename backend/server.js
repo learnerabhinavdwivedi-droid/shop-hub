@@ -4,6 +4,37 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const Product = require('./models/Product');
 const path = require('path');
+const cheerio = require('cheerio');
+const https = require('https');
+const http = require('http');
+
+// Helper: Fetch OG image from a URL
+async function fetchOgImage(url) {
+    return new Promise((resolve) => {
+        const timeout = setTimeout(() => resolve(null), 5000);
+        try {
+            const mod = url.startsWith('https') ? https : http;
+            mod.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (res) => {
+                if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+                    clearTimeout(timeout);
+                    return fetchOgImage(res.headers.location).then(resolve);
+                }
+                let html = '';
+                res.on('data', chunk => { html += chunk; if (html.length > 200000) res.destroy(); });
+                res.on('end', () => {
+                    clearTimeout(timeout);
+                    try {
+                        const $ = cheerio.load(html);
+                        const ogImg = $('meta[property="og:image"]').attr('content')
+                            || $('meta[name="twitter:image"]').attr('content');
+                        resolve(ogImg || null);
+                    } catch (e) { resolve(null); }
+                });
+                res.on('error', () => { clearTimeout(timeout); resolve(null); });
+            }).on('error', () => { clearTimeout(timeout); resolve(null); });
+        } catch (e) { clearTimeout(timeout); resolve(null); }
+    });
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -73,6 +104,7 @@ app.get('/api/analysis/all', async (req, res) => {
             return {
                 productName: product.productName,
                 store: product.store || 'universal',
+                url: product.url || '#',
                 currentPrice: latestPrice,
                 historicalAverage: averagePrice.toFixed(2),
                 imageUrl: product.imageUrl || 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=300',
@@ -117,9 +149,12 @@ app.post('/api/prices/analyze-url', async (req, res) => {
 
         const randomAsset = products_pool[Math.floor(Math.random() * products_pool.length)];
         const randomTitle = randomAsset.name;
-        const randomImage = randomAsset.img;
         const randomPrice = (Math.random() * (50000 - 5000) + 5000).toFixed(2);
         const histPrice = (parseFloat(randomPrice) * (1.1 + Math.random() * 0.3)).toFixed(2);
+
+        // Try to extract real product image from the URL
+        let extractedImage = await fetchOgImage(url);
+        const randomImage = extractedImage || randomAsset.img;
 
         const normalizedName = randomTitle.toLowerCase().trim();
         const priceHistory = [
@@ -211,7 +246,15 @@ app.get('/api/analysis/:productName', async (req, res) => {
         const latest = product.priceHistory[product.priceHistory.length - 1].price;
         const suggestion = latest <= (avg * 0.9) ? "Buy" : "Wait";
 
-        res.json({ productName: product.productName, currentPrice: latest, historicalAverage: avg.toFixed(2), suggestion });
+        res.json({
+            productName: product.productName,
+            currentPrice: latest,
+            historicalAverage: avg.toFixed(2),
+            suggestion,
+            url: product.url || '#',
+            imageUrl: product.imageUrl || 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=300',
+            priceHistory: product.priceHistory
+        });
     } catch (err) {
         res.status(500).json({ error: 'Server Error' });
     }
