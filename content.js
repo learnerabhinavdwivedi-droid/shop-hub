@@ -190,7 +190,7 @@ function checkLimitAndScrape(data, callback) {
 }
 
 function sendToBackend(data, callback) {
-    fetch('http://localhost:5000/api/prices', {
+    fetch('https://shop-hub-backend-h0kv.onrender.com/api/prices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
