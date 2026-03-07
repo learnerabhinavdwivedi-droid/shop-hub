@@ -1,15 +1,13 @@
 {
     "manifest_version": 3,
-    "name": "Amazon Price Tracker ($0-Cost)",
-    "version": "1.0",
-    "description": "Scrape Amazon prices with a free tier limit.",
+    "name": "Shop Hub Universal Price Tracker",
+    "version": "1.1",
+    "description": "Track prices across any shopping website instantly.",
     "permissions": [
         "storage"
     ],
     "host_permissions": [
-        "*://*.amazon.com/*",
-        "*://*.amazon.in/*",
-        "*://*.amazon.co.uk/*",
+        "<all_urls>",
         "http://localhost:5000/*"
     ],
     "action": {
@@ -24,9 +22,7 @@
     "content_scripts": [
         {
             "matches": [
-                "*://*.amazon.com/*",
-                "*://*.amazon.in/*",
-                "*://*.amazon.co.uk/*"
+                "<all_urls>"
             ],
             "js": [
                 "content.js"

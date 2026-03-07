@@ -1,67 +1,142 @@
-// Wait for the DOM to be fully prepared before running the scrape logic
+// Shop Hub Universal Content Script
+// Detects products and prices across any shopping site using Metadata & Selectors
+
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {
-    // If DOM is already loaded (e.g., dynamically rendered single-page apps), run immediately
-    // For Amazon, we might need a slight delay to ensure dynamic pricing elements load
     setTimeout(init, 1000);
 }
 
 function init() {
-    // ----------------------------------------------------
-    // 1. The "Receptionist" Logic
-    // ----------------------------------------------------
-    if (!window.location.hostname.includes("amazon")) {
-        return;
-    }
-
-    // Only add the button on product pages
-    if (document.querySelector("#add-to-cart-button") || document.querySelector("#buy-now-button")) {
+    // Basic heuristics to check if we are on a product page
+    if (isProductPage()) {
         injectTrackButton();
     }
 }
 
+function isProductPage() {
+    // Check for "Add to Cart", "Buy Now", or price presence
+    const commonKeywords = ["add to cart", "buy now", "add to bag", "buy it now", "buy"];
+    const buttons = Array.from(document.querySelectorAll('button, input[type="button"], a.button'));
+    const hasBuyButton = buttons.some(btn =>
+        commonKeywords.some(kw => (btn.innerText || btn.value || "").toLowerCase().includes(kw))
+    );
+
+    // Check for product metadata
+    const hasProductMeta = !!(
+        document.querySelector('meta[property="og:type"][content="product"]') ||
+        document.querySelector('script[type="application/ld+json"]') ||
+        document.querySelector('[itemtype*="Product"]')
+    );
+
+    return hasBuyButton || hasProductMeta;
+}
+
+function getProductData() {
+    let title = "Product Name Not Found";
+    let price = null;
+    let store = window.location.hostname.replace('www.', '').split('.')[0];
+    store = store.charAt(0).toUpperCase() + store.slice(1);
+
+    // 1. Try Metadata (Most Reliable for Universality)
+    const metaTitle = document.querySelector('meta[property="og:title"]') ||
+        document.querySelector('meta[name="twitter:title"]');
+    if (metaTitle) title = metaTitle.content;
+
+    const metaPrice = document.querySelector('meta[property="product:price:amount"]') ||
+        document.querySelector('meta[property="og:price:amount"]') ||
+        document.querySelector('meta[name="twitter:data1"]'); // Often used for price
+    if (metaPrice) {
+        const p = parseFloat(metaPrice.content.replace(/[^0-9.]/g, ''));
+        if (!isNaN(p)) price = p;
+    }
+
+    // 2. Try JSON-LD (Schema.org)
+    if (!price || title === "Product Name Not Found") {
+        const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+        for (let script of scripts) {
+            try {
+                const data = JSON.parse(script.textContent);
+                const items = Array.isArray(data) ? data : [data];
+                for (let item of items) {
+                    if (item['@type'] === 'Product' || item['@type']?.includes('Product')) {
+                        if (title === "Product Name Not Found" && item.name) title = item.name;
+                        if (!price && item.offers) {
+                            const offer = Array.isArray(item.offers) ? item.offers[0] : item.offers;
+                            if (offer.price) price = parseFloat(offer.price.toString().replace(/[^0-9.]/g, ''));
+                        }
+                    }
+                }
+            } catch (e) { }
+        }
+    }
+
+    // 3. Fallback to common selectors (Site Specific)
+    if (!price || title === "Product Name Not Found") {
+        const selectors = {
+            Amazon: { title: "#productTitle", price: ".a-price-whole" },
+            Ebay: { title: ".x-item-title__mainTitle", price: ".x-price-primary" },
+            Walmart: { title: "h1", price: "[data-automation-id='product-price']" },
+            Flipkart: { title: ".B_NuCI", price: "._30jeq3" }
+        };
+
+        const rules = selectors[store] || { title: "h1", price: ".price, [class*='price']" };
+
+        if (title === "Product Name Not Found") {
+            const el = document.querySelector(rules.title);
+            if (el) title = el.innerText.trim();
+        }
+
+        if (!price) {
+            const el = document.querySelector(rules.price);
+            if (el) {
+                const p = parseFloat(el.innerText.replace(/[^0-9.]/g, ''));
+                if (!isNaN(p)) price = p;
+            }
+        }
+    }
+
+    return { productName: title, price, store, url: window.location.href };
+}
+
 function injectTrackButton() {
-    // Check if button already exists
     if (document.getElementById("shophub-track-btn")) return;
 
     const btn = document.createElement("button");
     btn.id = "shophub-track-btn";
     btn.innerText = "🚀 Track with Shop Hub";
     btn.style.cssText = `
-        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
         color: white;
         border: none;
-        padding: 12px 20px;
+        padding: 14px 24px;
         font-size: 16px;
-        font-weight: 600;
-        border-radius: 8px;
+        font-weight: 700;
+        border-radius: 12px;
         cursor: pointer;
         width: 100%;
-        margin-top: 10px;
-        margin-bottom: 10px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        transition: transform 0.2s, box-shadow 0.2s;
+        margin: 15px 0;
+        box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+        transition: all 0.3s ease;
+        z-index: 999999;
+        display: block;
     `;
 
-    btn.onmouseover = () => {
-        btn.style.transform = "translateY(-1px)";
-        btn.style.boxShadow = "0 10px 15px -3px rgba(0, 0, 0, 0.1)";
-    };
-    btn.onmouseout = () => {
-        btn.style.transform = "translateY(0)";
-        btn.style.boxShadow = "0 4px 6px -1px rgba(0, 0, 0, 0.1)";
-    };
-
     btn.onclick = () => {
+        const data = getProductData();
+        if (!data.price) {
+            alert("Shop Hub: Could not detect the price on this page. Try scrolling or refreshing.");
+            return;
+        }
+
         btn.disabled = true;
-        btn.innerText = "⏳ Checking Limit...";
-        checkLimitAndScrape((success, msg) => {
-            if (success === true && !msg) {
-                // Tracking in progress or finished
-            } else if (success === "tracked") {
-                btn.innerText = "✅ Tracked Successfully!";
+        btn.innerText = "⏳ Adding to Tracker...";
+
+        checkLimitAndScrape(data, (success, msg) => {
+            if (success === "tracked") {
+                btn.innerText = "✅ Successfully Tracked!";
                 btn.style.background = "#10b981";
+                btn.style.boxShadow = "0 10px 15px -3px rgba(16, 185, 129, 0.3)";
             } else {
                 btn.innerText = "❌ Error";
                 btn.style.background = "#ef4444";
@@ -72,96 +147,59 @@ function injectTrackButton() {
         });
     };
 
-    // Find the buy box or injection point
-    const buyBox = document.querySelector("#desktop_buybox") ||
+    // Find best injection point
+    const injectionPoint =
+        document.querySelector("#desktop_buybox") ||
         document.querySelector("#buybox_feature_div") ||
-        document.querySelector("#container");
+        document.querySelector(".buy-box") ||
+        document.querySelector("[class*='buybox']") ||
+        document.querySelector("[data-automation-id='atc-and-buy-now-container']") ||
+        document.querySelector("h1")?.parentElement;
 
-    if (buyBox) {
-        buyBox.prepend(btn);
+    if (injectionPoint) {
+        if (injectionPoint.tagName === "H1") {
+            injectionPoint.after(btn);
+        } else {
+            injectionPoint.prepend(btn);
+        }
     }
 }
 
-function checkLimitAndScrape(callback) {
+function checkLimitAndScrape(data, callback) {
     chrome.storage.local.get(['searchCount', 'startDate'], function (result) {
         let searchCount = result.searchCount || 0;
         let startDate = result.startDate || Date.now();
 
-        const THIRTY_DAYS_IN_MS = 30 * 24 * 60 * 60 * 1000;
-        const now = Date.now();
-
-        if (now - startDate >= THIRTY_DAYS_IN_MS) {
+        if (Date.now() - startDate >= (30 * 24 * 60 * 60 * 1000)) {
             searchCount = 0;
-            startDate = now;
+            startDate = Date.now();
         }
 
         if (searchCount < 10) {
             searchCount++;
-            chrome.storage.local.set({
-                searchCount: searchCount,
-                startDate: startDate
-            }, function () {
-                performAmazonScrape((scrapSuccess, scrapMsg) => {
-                    if (scrapSuccess) {
-                        callback("tracked");
-                    } else {
-                        callback(false, scrapMsg);
-                    }
+            chrome.storage.local.set({ searchCount, startDate }, function () {
+                sendToBackend(data, (ok, msg) => {
+                    if (ok) callback("tracked");
+                    else callback(false, msg);
                 });
             });
         } else {
-            callback(false, "Limit reached: Upgrade to Pro.");
+            callback(false, "Free tier limit reached (10 products/month).");
         }
     });
 }
 
-function performAmazonScrape(callback) {
-    const titleElement = document.querySelector("#productTitle");
-    let cleanedTitle = titleElement ? titleElement.textContent.trim() : "Title not found";
-
-    const priceWholeElement = document.querySelector(".a-price-whole");
-    const priceFractionElement = document.querySelector(".a-price-fraction");
-
-    let cleanedPrice = null;
-
-    if (priceWholeElement && priceFractionElement) {
-        let rawPriceString = priceWholeElement.textContent + priceFractionElement.textContent;
-        rawPriceString = rawPriceString.replace(/[^0-9.]/g, '');
-        cleanedPrice = parseFloat(rawPriceString);
-    }
-
-    if (!cleanedPrice) {
-        console.error("Shop Hub: Could not find price.");
-        if (callback) callback(false, "Could not extract price.");
-        return;
-    }
-
-    const data = {
-        productName: cleanedTitle,
-        price: cleanedPrice,
-        store: "Amazon",
-        url: window.location.href
-    };
-
-    console.log("--- Shop Hub: Sending to Backend ---", data);
-
+function sendToBackend(data, callback) {
     fetch('http://localhost:5000/api/prices', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
     })
-        .then(response => {
-            if (!response.ok) throw new Error('API request failed');
-            return response.json();
-        })
-        .then(result => {
-            console.log("--- Shop Hub: Success ---", result);
-            if (callback) callback(true);
-        })
-        .catch(error => {
-            console.error("--- Shop Hub: Error ---", error);
-            if (callback) callback(false, "Backend connection failed. Is the server running?");
+        .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)))
+        .then(res => callback(true))
+        .catch(err => {
+            console.error("Shop Hub Backend Error:", err);
+            callback(false, "Backend connection failed. Is the server running at localhost:5000?");
         });
 }
+
