@@ -66,15 +66,86 @@ function isJunkTitle(title) {
     return junkWords.some(w => lower.includes(w)) || title.length < 4;
 }
 
-// Curated fallback images that always work
-const FALLBACK_IMAGES = [
-    'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=400&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?q=80&w=400&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&w=400&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=400&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1560343090-f0409e92791a?q=80&w=400&auto=format&fit=crop'
-];
+// Category-aware product images — matched by keywords in product name
+const CATEGORY_IMAGES = {
+    phone: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=400&auto=format&fit=crop',
+    iphone: 'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?q=80&w=400&auto=format&fit=crop',
+    samsung: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?q=80&w=400&auto=format&fit=crop',
+    laptop: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=400&auto=format&fit=crop',
+    macbook: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=400&auto=format&fit=crop',
+    computer: 'https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?q=80&w=400&auto=format&fit=crop',
+    tablet: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?q=80&w=400&auto=format&fit=crop',
+    ipad: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?q=80&w=400&auto=format&fit=crop',
+    headphone: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=400&auto=format&fit=crop',
+    earphone: 'https://images.unsplash.com/photo-1590658268037-6bf12f032f55?q=80&w=400&auto=format&fit=crop',
+    earbuds: 'https://images.unsplash.com/photo-1590658268037-6bf12f032f55?q=80&w=400&auto=format&fit=crop',
+    airpods: 'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?q=80&w=400&auto=format&fit=crop',
+    watch: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400&auto=format&fit=crop',
+    smartwatch: 'https://images.unsplash.com/photo-1546868871-af0de0ae72be?q=80&w=400&auto=format&fit=crop',
+    shoe: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=400&auto=format&fit=crop',
+    sneaker: 'https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&w=400&auto=format&fit=crop',
+    boot: 'https://images.unsplash.com/photo-1608256246200-53e635b5b65f?q=80&w=400&auto=format&fit=crop',
+    camera: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=400&auto=format&fit=crop',
+    tv: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?q=80&w=400&auto=format&fit=crop',
+    television: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?q=80&w=400&auto=format&fit=crop',
+    monitor: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=400&auto=format&fit=crop',
+    keyboard: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?q=80&w=400&auto=format&fit=crop',
+    mouse: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?q=80&w=400&auto=format&fit=crop',
+    speaker: 'https://images.unsplash.com/photo-1545454675-3531b543be5d?q=80&w=400&auto=format&fit=crop',
+    bag: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=400&auto=format&fit=crop',
+    backpack: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=400&auto=format&fit=crop',
+    shirt: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=400&auto=format&fit=crop',
+    jacket: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=400&auto=format&fit=crop',
+    dress: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=400&auto=format&fit=crop',
+    perfume: 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=400&auto=format&fit=crop',
+    fragrance: 'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=400&auto=format&fit=crop',
+    book: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=400&auto=format&fit=crop',
+    gaming: 'https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?q=80&w=400&auto=format&fit=crop',
+    console: 'https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?q=80&w=400&auto=format&fit=crop',
+    playstation: 'https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?q=80&w=400&auto=format&fit=crop',
+    xbox: 'https://images.unsplash.com/photo-1621259182978-fbf93132d53d?q=80&w=400&auto=format&fit=crop',
+    refrigerator: 'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?q=80&w=400&auto=format&fit=crop',
+    fridge: 'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?q=80&w=400&auto=format&fit=crop',
+    washing: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?q=80&w=400&auto=format&fit=crop',
+    furniture: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=400&auto=format&fit=crop',
+    chair: 'https://images.unsplash.com/photo-1592078615290-033ee584e267?q=80&w=400&auto=format&fit=crop',
+    desk: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?q=80&w=400&auto=format&fit=crop',
+    sunglasses: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=400&auto=format&fit=crop',
+    glasses: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=400&auto=format&fit=crop',
+    toy: 'https://images.unsplash.com/photo-1558060370-d644479cb6f7?q=80&w=400&auto=format&fit=crop',
+    beauty: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=400&auto=format&fit=crop',
+    makeup: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=400&auto=format&fit=crop',
+    skincare: 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?q=80&w=400&auto=format&fit=crop',
+    default: 'https://images.unsplash.com/photo-1560343090-f0409e92791a?q=80&w=400&auto=format&fit=crop'
+};
+
+// Pick a category-relevant image based on product name keywords
+function getCategoryImage(productName) {
+    if (!productName) return CATEGORY_IMAGES.default;
+    const lower = productName.toLowerCase();
+    for (const [keyword, imageUrl] of Object.entries(CATEGORY_IMAGES)) {
+        if (keyword !== 'default' && lower.includes(keyword)) {
+            return imageUrl;
+        }
+    }
+    return CATEGORY_IMAGES.default;
+}
+
+// Generate 12 months of realistic price history
+function generateYearlyPriceHistory(basePrice) {
+    const history = [];
+    for (let i = 11; i >= 0; i--) {
+        const variance = 0.85 + Math.random() * 0.3; // ±15% fluctuation
+        const price = parseFloat((basePrice * variance).toFixed(2));
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        date.setDate(1 + Math.floor(Math.random() * 20));
+        history.push({ price, date });
+    }
+    // Ensure the last entry is the current price at today's date
+    history[history.length - 1].date = new Date();
+    return history;
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -91,12 +162,8 @@ const mockDb = [
         productName: "apple iphone 16 pro max, 256gb, desert titanium",
         store: "amazon",
         url: "http://localhost:5000/preview",
-        imageUrl: "https://images.unsplash.com/photo-1727192629344-97217596a5ca?q=80&w=600&auto=format&fit=crop",
-        priceHistory: [
-            { price: 129000.00, date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
-            { price: 125000.00, date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000) },
-            { price: 119999.00, date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) }
-        ]
+        imageUrl: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?q=80&w=600&auto=format&fit=crop",
+        priceHistory: generateYearlyPriceHistory(125000)
     }
 ];
 
@@ -147,7 +214,7 @@ app.get('/api/analysis/all', async (req, res) => {
                 url: product.url || '#',
                 currentPrice: latestPrice,
                 historicalAverage: averagePrice.toFixed(2),
-                imageUrl: product.imageUrl || 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=300',
+                imageUrl: product.imageUrl || getCategoryImage(product.productName),
                 suggestion
             };
         });
@@ -186,16 +253,12 @@ app.post('/api/prices/analyze-url', async (req, res) => {
         const urlTitle = extractTitleFromUrl(url);
         const ogTitle = (!isJunkTitle(pageMeta.title)) ? pageMeta.title : null;
         const productTitle = ogTitle || urlTitle || `Product from ${storeName}`;
-        const productImage = pageMeta.image || FALLBACK_IMAGES[Math.floor(Math.random() * FALLBACK_IMAGES.length)];
+        const productImage = pageMeta.image || getCategoryImage(productTitle);
 
         const randomPrice = (Math.random() * (50000 - 5000) + 5000).toFixed(2);
-        const histPrice = (parseFloat(randomPrice) * (1.1 + Math.random() * 0.3)).toFixed(2);
 
         const normalizedName = productTitle.toLowerCase().trim();
-        const priceHistory = [
-            { price: parseFloat(histPrice), date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
-            { price: parseFloat(randomPrice), date: new Date() }
-        ];
+        const priceHistory = generateYearlyPriceHistory(parseFloat(randomPrice));
 
         if (isUsingMock) {
             let product = mockDb.find(p => p.productName === normalizedName && p.store === storeName.toLowerCase());
@@ -287,7 +350,7 @@ app.get('/api/analysis/:productName', async (req, res) => {
             historicalAverage: avg.toFixed(2),
             suggestion,
             url: product.url || '#',
-            imageUrl: product.imageUrl || 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=300',
+            imageUrl: product.imageUrl || getCategoryImage(product.productName),
             priceHistory: product.priceHistory
         });
     } catch (err) {

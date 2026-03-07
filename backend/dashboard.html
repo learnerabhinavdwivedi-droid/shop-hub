@@ -398,7 +398,7 @@
             const container = document.getElementById('tracks-container');
             container.innerHTML = products.map(p => `
                 <div class="track-card">
-                    <img src="${p.imageUrl}" class="product-img" alt="${p.productName}">
+                    <img src="${p.imageUrl}" class="product-img" alt="${p.productName}" onerror="this.src='https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&q=80&w=400'">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
                         <div class="status-badge ${p.suggestion === 'Buy' ? 'status-buy' : 'status-wait'}">${p.suggestion}</div>
                         <span style="font-size: 10px; opacity: 0.6; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">${p.store}</span>
