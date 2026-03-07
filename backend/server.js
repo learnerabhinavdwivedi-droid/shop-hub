@@ -45,22 +45,36 @@ async function fetchPageMeta(url) {
 function extractTitleFromUrl(url) {
     try {
         const pathname = new URL(url).pathname;
-        // Find the longest slug segment (likely the product name)
         const segments = pathname.split('/').filter(s => s.length > 5);
         if (segments.length === 0) return null;
-        // Pick the segment that looks most like a product name (has hyphens)
         const best = segments.reduce((a, b) => {
             const aScore = (a.match(/-/g) || []).length;
             const bScore = (b.match(/-/g) || []).length;
             return bScore > aScore ? b : a;
         });
-        // Clean: replace hyphens with spaces, remove IDs and query params
         let cleaned = best.replace(/[-_]/g, ' ').replace(/\b[a-f0-9]{10,}\b/gi, '').trim();
         if (cleaned.length < 5) return null;
-        // Capitalize words
         return cleaned.split(' ').filter(w => w.length > 0).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     } catch (e) { return null; }
 }
+
+// Helper: Check if a title is a junk/captcha page
+function isJunkTitle(title) {
+    if (!title) return true;
+    const lower = title.toLowerCase();
+    const junkWords = ['captcha', 'recaptcha', 'robot', 'verify', 'access denied', 'blocked', 'please wait', 'error', 'not found', '404', '403'];
+    return junkWords.some(w => lower.includes(w)) || title.length < 4;
+}
+
+// Curated fallback images that always work
+const FALLBACK_IMAGES = [
+    'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?q=80&w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1560343090-f0409e92791a?q=80&w=400&auto=format&fit=crop'
+];
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -168,10 +182,11 @@ app.post('/api/prices/analyze-url', async (req, res) => {
         // Extract real product data from the URL
         const pageMeta = await fetchPageMeta(url);
 
-        // Smart title: OG title > URL path extraction > generic fallback
+        // Smart title: OG title (if not junk) > URL path extraction > generic fallback
         const urlTitle = extractTitleFromUrl(url);
-        const productTitle = pageMeta.title || urlTitle || `Product from ${storeName}`;
-        const productImage = pageMeta.image || `https://source.unsplash.com/400x400/?${encodeURIComponent(productTitle.split(' ').slice(0, 2).join(' '))},product`;
+        const ogTitle = (!isJunkTitle(pageMeta.title)) ? pageMeta.title : null;
+        const productTitle = ogTitle || urlTitle || `Product from ${storeName}`;
+        const productImage = pageMeta.image || FALLBACK_IMAGES[Math.floor(Math.random() * FALLBACK_IMAGES.length)];
 
         const randomPrice = (Math.random() * (50000 - 5000) + 5000).toFixed(2);
         const histPrice = (parseFloat(randomPrice) * (1.1 + Math.random() * 0.3)).toFixed(2);
