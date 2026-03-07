@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Hub Pro</title>
+    <link rel="stylesheet" href="popup.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <img src="icons/icon48.png" alt="Logo" class="logo">
+            <h1>Shop Hub Pro</h1>
+        </header>
+
+        <div class="card">
+            <h3>Free Tier Usage</h3>
+            <div class="progress-wrap">
+                <div class="bar" id="usage-bar"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                <span id="usage-text">0/10 Products</span>
+                <span style="color: var(--primary); font-weight: 600;">Upgrade</span>
+            </div>
+        </div>
+
+        <!-- Analysis Card -->
+        <div id="analysis-card" class="card" style="display: none;">
+            <h3>Smart Analysis</h3>
+            <div class="analysis-main">
+                <div id="suggestion" class="suggestion-text">---</div>
+                <div style="font-size: 0.75rem; color: #94a3b8; margin-top: -5px;">Our AI Suggestion</div>
+            </div>
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <span>Average</span>
+                    <strong id="avg-price">$0.00</strong>
+                </div>
+                <div class="stat-box">
+                    <span>Current</span>
+                    <strong id="curr-price">$0.00</strong>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-pro" id="open-dashboard">Open Dashboard</button>
+        <p style="text-align: center; font-size: 0.65rem; color: #64748b; margin-top: 15px;">Powered by Shop Hub AI •
+            v2.0</p>
+    </div>
+    <script src="popup.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Hub - Functional Preview</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --secondary: #8b5cf6;
+            --bg-dark: #0f172a;
+            --card-bg: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        body {
+            font-family: "Amazon Ember", Arial, sans-serif;
+            background-color: #f1f5f9;
+            margin: 0;
+            padding: 20px;
+            color: var(--text-dark);
+        }
+
+        .demo-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+
+        .main-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 30px;
+        }
+
+        /* Amazon Mockup */
+        .amazon-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 30px;
+        }
+
+        .product-img {
+            width: 350px;
+            height: 350px;
+            background: #f8fafc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #cbd5e1;
+            border: 1px solid #e2e8f0;
+        }
+
+        .product-details {
+            flex: 1;
+        }
+
+        h1 {
+            font-size: 22px;
+            margin: 0 0 10px 0;
+            line-height: 1.3;
+        }
+
+        .price-tag {
+            font-size: 28px;
+            color: #b12704;
+            font-weight: 500;
+            margin: 15px 0;
+        }
+
+        /* Shop Hub UI */
+        .shophub-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .shophub-card {
+            background: #0f172a;
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .shophub-card h2 {
+            font-size: 16px;
+            margin: 0 0 15px 0;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .suggestion-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .suggestion-label {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 5px;
+        }
+
+        .suggestion-value {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .stat-label {
+            color: #94a3b8;
+        }
+
+        .stat-value {
+            font-weight: 600;
+        }
+
+        #track-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            width: 100%;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            margin-top: 10px;
+        }
+
+        #track-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.6);
+        }
+
+        #track-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .buy-box {
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 12px;
+            background: #fff;
+        }
+
+        .amazon-btn {
+            border-radius: 20px;
+            padding: 10px;
+            width: 100%;
+            border: 1px solid;
+            margin-bottom: 10px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="text-align: center;">
+        <div class="demo-badge">LIVE FUNCTIONAL DEMO</div>
+        <p style="margin-bottom: 30px; color: #64748b;">This page demonstrates real-time decision making using the Shop
+            Hub backend.</p>
+    </div>
+
+    <div class="main-container">
+        <!-- Amazon Product View -->
+        <div class="amazon-card">
+            <div class="product-img">IPHONE 16 PRO MAX</div>
+            <div class="product-details">
+                <h1 id="p-title">Apple iPhone 16 Pro Max, 256GB, Desert Titanium</h1>
+                <p style="color: #007185; margin: 0;">Apple Store</p>
+                <div class="price-tag" id="p-price">$1,199.00</div>
+                <p style="font-size: 14px;">Color: <b>Desert Titanium</b></p>
+                <div style="margin-top: 20px; font-size: 14px; line-height: 1.6;">
+                    <b>About this item:</b><br>
+                    • A18 Pro chip with 6-core GPU<br>
+                    • Pro camera system with 48MP Fusion<br>
+                    • All-new Camera Control
+                </div>
+            </div>
+        </div>
+
+        <!-- Shop Hub Sidebar (Simulating Extension + Popup) -->
+        <div class="shophub-sidebar">
+            <div class="buy-box">
+                <div style="font-size: 18px; font-weight: bold; margin-bottom: 15px;">$1,199.00</div>
+                <button class="amazon-btn" style="background: #ffd814; border-color: #fcd200;">Add to Cart</button>
+                <button class="amazon-btn" style="background: #ffa41c; border-color: #ff8f00;">Buy Now</button>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+
+                <!-- The Injected Tracker Button -->
+                <button id="track-btn" onclick="handleTrack()">🚀 Track with Shop Hub</button>
+            </div>
+
+            <!-- Analysis Results (The "Decision" Part) -->
+            <div class="shophub-card" id="analysis-card">
+                <h2>Price Analysis</h2>
+                <div id="loading-analysis" class="hidden">Analyzing...</div>
+                <div id="analysis-content">
+                    <div class="suggestion-box">
+                        <div class="suggestion-label">Our Suggestion</div>
+                        <div class="suggestion-value" id="suggestion">...</div>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Historical Avg</span>
+                        <span class="stat-value" id="avg-price">$0.00</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Current Price</span>
+                        <span class="stat-value" id="curr-price">$0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        const productTitle = "Apple iPhone 16 Pro Max, 256GB, Desert Titanium";
+
+        async function fetchAnalysis() {
+            try {
+                const response = await fetch(`${API_BASE}/analysis/${encodeURIComponent(productTitle)}`);
+                if (!response.ok) throw new Error('No data');
+                const data = await response.json();
+
+                document.getElementById('suggestion').innerText = data.suggestion;
+                document.getElementById('avg-price').innerText = `$${data.historicalAverage}`;
+                document.getElementById('curr-price').innerText = `$${data.currentPrice}`;
+
+                // Visual flair for suggestion
+                const suggElem = document.getElementById('suggestion');
+                if (data.suggestion === "Buy") {
+                    suggElem.style.background = "linear-gradient(to right, #10b981, #34d399)";
+                    suggElem.style.webkitBackgroundClip = "text";
+                } else {
+                    suggElem.style.background = "linear-gradient(to right, #f59e0b, #fbbf24)";
+                    suggElem.style.webkitBackgroundClip = "text";
+                }
+            } catch (err) {
+                console.error("Analysis fetch failed:", err);
+            }
+        }
+
+        async function handleTrack() {
+            const btn = document.getElementById('track-btn');
+            const originalText = btn.innerText;
+
+            btn.disabled = true;
+            btn.innerText = "⏳ Scraping...";
+
+            const payload = {
+                productName: productTitle,
+                price: 1199.00,
+                store: "Amazon",
+                url: window.location.href
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/prices`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    btn.innerText = "✅ Tracked Successfully!";
+                    btn.style.background = "#10b981";
+                    // Refresh analysis after tracking
+                    setTimeout(fetchAnalysis, 500);
+                } else {
+                    throw new Error('Failed to track');
+                }
+            } catch (err) {
+                btn.innerText = "❌ Connection Error";
+                btn.style.background = "#ef4444";
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                    btn.style.background = "";
+                }, 2000);
+            }
+        }
+
+        // Load initial analysis on page load
+        window.addEventListener('DOMContentLoaded', fetchAnalysis);
+    </script>
+</body>
+
+</html>

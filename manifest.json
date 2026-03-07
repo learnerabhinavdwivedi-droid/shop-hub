@@ -1,0 +1,36 @@
+{
+    "manifest_version": 3,
+    "name": "Amazon Price Tracker ($0-Cost)",
+    "version": "1.0",
+    "description": "Scrape Amazon prices with a free tier limit.",
+    "permissions": [
+        "storage"
+    ],
+    "host_permissions": [
+        "*://*.amazon.com/*",
+        "*://*.amazon.in/*",
+        "*://*.amazon.co.uk/*",
+        "http://localhost:5000/*"
+    ],
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "128": "icons/icon128.png"
+        }
+    },
+    "icons": {
+        "128": "icons/icon128.png"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "*://*.amazon.com/*",
+                "*://*.amazon.in/*",
+                "*://*.amazon.co.uk/*"
+            ],
+            "js": [
+                "content.js"
+            ]
+        }
+    ]
+}

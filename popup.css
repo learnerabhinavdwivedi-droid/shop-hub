@@ -1,0 +1,134 @@
+:root {
+    --primary: #6366f1;
+    --secondary: #a855f7;
+    --bg: #0f172a;
+    --glass: rgba(30, 41, 59, 0.7);
+    --border: rgba(255, 255, 255, 0.1);
+    --success: #10b981;
+    --warning: #f59e0b;
+}
+
+body {
+    width: 320px;
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    font-family: 'Outfit', sans-serif;
+    color: white;
+    overflow: hidden;
+}
+
+.container {
+    padding: 20px;
+    background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.1), transparent);
+}
+
+header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.logo {
+    width: 32px;
+    filter: drop-shadow(0 0 8px var(--primary));
+}
+
+h1 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.5px;
+    background: linear-gradient(to right, #818cf8, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.card {
+    background: var(--glass);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+h3 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #94a3b8;
+    margin: 0 0 12px 0;
+}
+
+.analysis-main {
+    text-align: center;
+    padding: 10px 0;
+}
+
+.suggestion-text {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+
+.buy {
+    color: var(--success);
+    text-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+}
+
+.wait {
+    color: var(--warning);
+    text-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+}
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 15px;
+    border-top: 1px solid var(--border);
+    padding-top: 15px;
+}
+
+.stat-box span {
+    display: block;
+    font-size: 0.7rem;
+    color: #94a3b8;
+}
+
+.stat-box strong {
+    font-size: 1rem;
+}
+
+.progress-wrap {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.bar {
+    height: 100%;
+    background: linear-gradient(to right, var(--primary), var(--secondary));
+    transition: width 0.5s ease;
+}
+
+.btn-pro {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-pro:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}

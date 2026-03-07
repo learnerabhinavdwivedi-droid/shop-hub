@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Hub | Premium Price Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --accent: #f43f5e;
+            --bg: #0f172a;
+            --glass: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            background-image: radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(168, 85, 247, 0.15) 0%, transparent 50%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .navbar {
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero {
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin: 0 0 20px 0;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: #94a3b8;
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+
+        .search-container {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            background: var(--glass);
+            padding: 10px;
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            outline: none;
+        }
+
+        .analyze-btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .analyze-btn:hover {
+            transform: scale(1.05);
+            filter: brightness(1.2);
+        }
+
+        .dashboard-grid {
+            max-width: 1200px;
+            margin: 60px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        .track-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 25px;
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .track-card:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+
+        .status-buy {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .status-wait {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .product-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            line-height: 1.4;
+            height: 3.5rem;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .price-stats {
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid var(--glass-border);
+            padding-top: 20px;
+        }
+
+        .stat-item span {
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 5px;
+        }
+
+        .stat-val {
+            font-size: 1.1rem;
+            font-weight: 800;
+        }
+
+        #loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s infinite linear;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loading-overlay">
+        <div style="text-align: center;">
+            <div class="spinner"></div>
+            <p style="margin-top: 20px; font-weight: 600;">Analyzing Market Data...</p>
+        </div>
+    </div>
+
+    <nav class="navbar">
+        <div class="logo">Shop Hub Pro</div>
+        <div>
+            <span style="font-size: 14px; color: #94a3b8; margin-right: 20px;">v2.0 Premium</span>
+            <button
+                style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: white; padding: 8px 16px; border-radius: 10px; cursor: pointer;">Documentation</button>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <h1>Smart Decisions Start Here</h1>
+        <p>Analyze product links from any store instantly. Our AI compares current prices against historical data to
+            give you the
+            perfect "Buy" window.</p>
+
+        <div class="search-container">
+            <input type="text" id="link-input" class="search-input"
+                placeholder="Paste any product link here (Amazon, eBay, Walmart, etc.)">
+            <button class="analyze-btn" onclick="analyzeLink()">Analyze Link</button>
+        </div>
+    </header>
+
+    <main id="tracks-container" class="dashboard-grid">
+        <!-- Cards added here -->
+    </main>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+
+        async function loadTracks() {
+            try {
+                const response = await fetch(`${API_BASE}/analysis/all`);
+                const products = await response.json();
+                renderCards(products);
+            } catch (err) {
+                console.error("Failed to load tracks");
+            }
+        }
+
+        function renderCards(products) {
+            const container = document.getElementById('tracks-container');
+            container.innerHTML = products.map(p => `
+                <div class="track-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                        <div class="status-badge ${p.suggestion === 'Buy' ? 'status-buy' : 'status-wait'}">${p.suggestion}</div>
+                        <span style="font-size: 10px; opacity: 0.6; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">${p.store}</span>
+                    </div>
+                    <div class="product-name">${p.productName}</div>
+                    <div class="price-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Current</span>
+                            <span class="stat-val">$${p.currentPrice}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Historical Avg</span>
+                            <span class="stat-val">$${p.historicalAverage}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function analyzeLink() {
+            const input = document.getElementById('link-input');
+            const url = input.value.trim();
+            if (!url) return alert("Please paste a valid product URL");
+
+            document.getElementById('loading-overlay').style.display = 'flex';
+
+            try {
+                const response = await fetch(`${API_BASE}/prices/analyze-url`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+
+                if (response.ok) {
+                    await loadTracks();
+                    input.value = "";
+                } else {
+                    const data = await response.json();
+                    alert(data.error || "Analysis failed. Please ensure the link is a valid product.");
+                }
+            } catch (err) {
+                alert("Connection failed");
+            } finally {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        }
+
+        // Initialize with default data
+        window.addEventListener('DOMContentLoaded', loadTracks);
+    </script>
+</body>
+
+</html>
