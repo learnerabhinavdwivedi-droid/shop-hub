@@ -110,6 +110,10 @@ app.post('/api/prices/analyze-url', async (req, res) => {
         const histPrice = (parseFloat(randomPrice) * (1.1 + Math.random() * 0.3)).toFixed(2);
 
         const normalizedName = randomTitle.toLowerCase().trim();
+        const priceHistory = [
+            { price: parseFloat(histPrice), date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+            { price: parseFloat(randomPrice), date: new Date() }
+        ];
 
         if (isUsingMock) {
             let product = mockDb.find(p => p.productName === normalizedName && p.store === storeName.toLowerCase());
@@ -118,17 +122,27 @@ app.post('/api/prices/analyze-url', async (req, res) => {
                     productName: normalizedName,
                     store: storeName.toLowerCase(),
                     url: url,
-                    priceHistory: [
-                        { price: parseFloat(histPrice), date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
-                        { price: parseFloat(randomPrice), date: new Date() }
-                    ]
+                    priceHistory: priceHistory
                 };
                 mockDb.push(product);
             }
             return res.json({ message: `Tracked on ${storeName} (Simulated)`, product });
         }
-        return res.status(501).json({ error: 'Real URL scraping requires backend service.' });
+
+        // Live Mode (MongoDB)
+        let product = await Product.findOne({ productName: normalizedName, store: storeName.toLowerCase() });
+        if (!product) {
+            product = new Product({
+                productName: normalizedName,
+                store: storeName.toLowerCase(),
+                url: url,
+                priceHistory: priceHistory
+            });
+            await product.save();
+        }
+        return res.json({ message: `Tracked on ${storeName} (Simulated)`, product });
     } catch (err) {
+        console.error("Analysis error:", err);
         res.status(500).json({ error: 'Server Error' });
     }
 });
